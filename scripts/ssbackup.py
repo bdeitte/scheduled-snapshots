@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 #
-# Creates a new snapshot for all passed volumes deletes old snapshots
-# Originally from https://www.flynsarmy.com/2015/06/how-to-schedule-daily-rolling-ebs-snapshots/
+# Creats a new snapshot for all passed volumes deletes old snapshots
 #
 # Usage:
 # python3 ssbackup.py --volume-ids=vol-1a23bcd4 --volume-ids=vol-2b34cde5 --expiry-days=7
@@ -14,6 +13,7 @@ import logging
 import time, datetime, dateutil.parser
 
 profile = 'ssbackup'       # Your AWS CLI profile
+region = 'ap-southeast-2'  # AWS region volumes/snapshots are located
 
 def bash(command):
     process = subprocess.Popen(command, stdout=subprocess.PIPE)
@@ -21,62 +21,65 @@ def bash(command):
 
 def getOurSnapshots():
     """
-    Return a list of snapshot Dicts created with this plugin.
+        Return a list of snapshot Dicts created with this plugin.
     """
     return json.loads(bash([
-                "aws", "ec2", "describe-snapshots",
-                "--filters", "Name=tag-key,Values=Group", "Name=tag-value,Values=ssbackup",
-                "--profile", profile
-                ]))['Snapshots']
+            "aws", "ec2", "describe-snapshots",
+            "--filters", "Name=tag-key,Values=Group", "Name=tag-value,Values=ssbackup",
+            "--profile", profile,
+            "--region", region
+        ]))['Snapshots']
 
 def createSnapshots(volumeIds):
     """
-    Return True if snapshots of the given volumes are created, else False
+        Return True if snapshots of the given volumes are created, else False
 
-    Keyword arguments:
-    volumeIds -- List of EBS volume IDs
+        Keyword arguments:
+        volumeIds -- List of EBS volume IDs
     """
     # Create the snapshots
     snapshots = []
     for volumeId in volumeIds:
         snapshots.append(createSnapshotForVolume(volumeId))
 
-        # Add Name and Group tags to the snapshot
-        if len(snapshots):
-            snapshotIds = []
-date = time.strftime("%Y-%m-%d")
+    # Add Name and Group tags to the snapshot
+    if len(snapshots):
+        snapshotIds = []
+        date = time.strftime("%Y-%m-%d")
 
-for snapshot in snapshots:
-    snapshotIds.append(snapshot['SnapshotId'])
+        for snapshot in snapshots:
+            snapshotIds.append(snapshot['SnapshotId'])
 
-response = json.loads(bash([
+        response = json.loads(bash([
             "aws", "ec2", "create-tags",
             "--resources", ' '.join(snapshotIds),
             "--tags", "Key=Name,Value='Backup "+date+"'", "Key=Group,Value=ssbackup",
-            "--profile", profile
-            ]))
+            "--profile", profile,
+            "--region", region
+        ]))
 
-if response['return'] == 'true':
-    return True
+        if response['return'] == 'true':
+            return True
 
-return False
+    return False
 
 def createSnapshotForVolume(volumeId):
     """
-    Return a Dict of a created snapshot for the given EBS volume
+        Return a Dict of a created snapshot for the given EBS volume
 
-    Keyword arguments:
-    volumeId -- An EBS volume ID
+        Keyword arguments:
+        volumeId -- An EBS volume ID
     """
 
     date = time.strftime("%Y-%m-%d")
     message = "Creating snapshot for volume "+volumeId+"..."
     response = json.loads(bash([
-                "aws", "ec2", "create-snapshot",
-                "--volume-id", volumeId,
-                "--description", "Backup "+date,
-                "--profile", profile
-                ]))
+        "aws", "ec2", "create-snapshot",
+        "--volume-id", volumeId,
+        "--description", "Backup "+date,
+        "--profile", profile,
+        "--region", region
+    ]))
     message += response['SnapshotId']
     logging.info(message)
 
@@ -84,24 +87,25 @@ def createSnapshotForVolume(volumeId):
 
 def deleteOldSnapshots(snapshots, max_age):
     """
-    Delete all listed snapshots older than max_age
+        Delete all listed snapshots older than max_age
     """
     snapshotIds = []
     date = datetime.datetime.now()
 
     for snapshot in snapshots:
         snapshotDate = dateutil.parser.parse(snapshot['StartTime']).replace(tzinfo=None)
-dateDiff = date - snapshotDate
+        dateDiff = date - snapshotDate
 
-if dateDiff.days >= max_age:
-    message = "Deleting snapshot "+snapshot['SnapshotId']+" ("+str(dateDiff.days)+" days old)..."
-    response = json.loads(bash([
+        if dateDiff.days >= max_age:
+            message = "Deleting snapshot "+snapshot['SnapshotId']+" ("+str(dateDiff.days)+" days old)..."
+            response = json.loads(bash([
                 "aws", "ec2", "delete-snapshot",
                 "--snapshot-id", snapshot['SnapshotId'],
-                "--profile", profile
-                ]))
-    message += "done"
-    logging.info(message)
+                "--profile", profile,
+                "--region", region
+            ]))
+            message += "done"
+            logging.info(message)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='ADD YOUR DESCRIPTION HERE')
@@ -117,8 +121,8 @@ if __name__ == '__main__':
     # Create the snapshots
     if len(volumeIds):
         snapshots = createSnapshots(volumeIds)
-pass
+        pass
 
-# Delete snapshots older than expiry-days
-if args.delete_old:
-    deleteOldSnapshots(getOurSnapshots(), args.expiry_days)
+    # Delete snapshots older than expiry-days
+    if args.delete_old:
+        deleteOldSnapshots(getOurSnapshots(), args.expiry_days)
