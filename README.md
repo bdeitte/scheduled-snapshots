@@ -92,4 +92,4 @@ Save the file, and you're all set!  The script will now run every day, and you'l
 
 ## Credits
 
-I've modified the script and steps from a [https://www.flynsarmy.com/2015/06/how-to-schedule-daily-rolling-ebs-snapshots/](blog post on the subject).  Thank this person and not me for this project, as they are largely responsible for it!
+I've modified the script and steps from a [blog post on the subject](https://www.flynsarmy.com/2015/06/how-to-schedule-daily-rolling-ebs-snapshots/).  Thank this person and not me for this project, as they are largely responsible for it!
