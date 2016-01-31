@@ -1,7 +1,5 @@
 A step-by-step guide for taking daily, rotating snapshots of EBS volumes.  You will get one new snapshot every day, and any snapshot over 7 days old will be deleted automatically.
 
-I wanted to make EBS snapshots for a [Ghost setup on AWS](https://github.com/bdeitte/ghost-on-aws), I couldn't find a good, simple guide for this.  I found something pretty close (see the Credits below), which I've expanded on.  Enjoy.  PRs/suggestions always welcome.
-
 ## Set up an IAM User
 
 First we need to set up a user that we will use specifically for backups, which has the permissions we need (and just these permissions).  To do this:
