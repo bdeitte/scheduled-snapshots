@@ -5,6 +5,7 @@ I wanted to make EBS snapshots for a [Ghost setup on AWS](https://github.com/bde
 ## Set up an IAM User
 
 First we need to set up a user that we will use specifically for backups, which has the permissions we need (and just these permissions).  To do this:
+
 1. Go to "Identity and Access Management" section in the AWS console.
 2. Click on "Users" on the left.
 3. Enter one user name, "snapshot-backup".  Click Create.
