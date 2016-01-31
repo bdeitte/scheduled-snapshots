@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 #
-# Creats a new snapshot for all passed volumes deletes old snapshots
+# Creates a new snapshot for all passed-in volumes and deletes old snapshots
+# Originally from https://www.flynsarmy.com/2015/06/how-to-schedule-daily-rolling-ebs-snapshots/
 #
 # Usage:
 # python3 ssbackup.py --volume-ids=vol-1a23bcd4 --volume-ids=vol-2b34cde5 --expiry-days=7
@@ -13,7 +14,6 @@ import logging
 import time, datetime, dateutil.parser
 
 profile = 'ssbackup'       # Your AWS CLI profile
-region = 'ap-southeast-2'  # AWS region volumes/snapshots are located
 
 def bash(command):
     process = subprocess.Popen(command, stdout=subprocess.PIPE)
@@ -26,8 +26,7 @@ def getOurSnapshots():
     return json.loads(bash([
             "aws", "ec2", "describe-snapshots",
             "--filters", "Name=tag-key,Values=Group", "Name=tag-value,Values=ssbackup",
-            "--profile", profile,
-            "--region", region
+            "--profile", profile
         ]))['Snapshots']
 
 def createSnapshots(volumeIds):
@@ -54,8 +53,7 @@ def createSnapshots(volumeIds):
             "aws", "ec2", "create-tags",
             "--resources", ' '.join(snapshotIds),
             "--tags", "Key=Name,Value='Backup "+date+"'", "Key=Group,Value=ssbackup",
-            "--profile", profile,
-            "--region", region
+            "--profile", profile
         ]))
 
         if response['return'] == 'true':
@@ -77,8 +75,7 @@ def createSnapshotForVolume(volumeId):
         "aws", "ec2", "create-snapshot",
         "--volume-id", volumeId,
         "--description", "Backup "+date,
-        "--profile", profile,
-        "--region", region
+        "--profile", profile
     ]))
     message += response['SnapshotId']
     logging.info(message)
@@ -101,8 +98,7 @@ def deleteOldSnapshots(snapshots, max_age):
             response = json.loads(bash([
                 "aws", "ec2", "delete-snapshot",
                 "--snapshot-id", snapshot['SnapshotId'],
-                "--profile", profile,
-                "--region", region
+                "--profile", profile
             ]))
             message += "done"
             logging.info(message)
