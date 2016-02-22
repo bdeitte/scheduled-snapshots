@@ -49,15 +49,20 @@ def createSnapshots(volumeIds):
         for snapshot in snapshots:
             snapshotIds.append(snapshot['SnapshotId'])
 
-        response = json.loads(bash([
+        response = bash([
             "aws", "ec2", "create-tags",
             "--resources", ' '.join(snapshotIds),
             "--tags", "Key=Name,Value='Backup "+date+"'", "Key=Group,Value=ssbackup",
             "--profile", profile
-        ]))
-
-        if response['return'] == 'true':
+        ])
+        if response.strip() == "":
+            # Some versions of the CLI do not return data on a successful
+            # call here, and that's ok
             return True
+        else:
+            responseJson = json.loads(response)
+            if responseJson['return'] == 'true':
+                return True
 
     return False
 
@@ -104,7 +109,7 @@ def deleteOldSnapshots(snapshots, max_age):
             logging.info(message)
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='ADD YOUR DESCRIPTION HERE')
+    parser = argparse.ArgumentParser(description='AWS EBS snapshot utility')
     parser.add_argument('-i','--volume-ids', help='EBS volume ID', required=True)
     parser.add_argument('-d','--delete-old', help='Delete old snapshots?', required=False, type=bool, default=True)
     parser.add_argument('-x','--expiry-days', help='Number of days to keep snapshots', required=False, type=int, default=7)
@@ -116,9 +121,13 @@ if __name__ == '__main__':
     volumeIds = args.volume_ids.split(',')
     # Create the snapshots
     if len(volumeIds):
+        print("Creating snapshots");
         snapshots = createSnapshots(volumeIds)
         pass
 
     # Delete snapshots older than expiry-days
     if args.delete_old:
+        print("Deleting old snapshots")
         deleteOldSnapshots(getOurSnapshots(), args.expiry_days)
+
+    print("Processing completed")
