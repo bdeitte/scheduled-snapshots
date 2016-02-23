@@ -43,7 +43,7 @@ On the instance where you want to run the snapshot tool, first make sure you hav
 ```
 sudo apt-get install awscli
  ```
- 
+
 Then we need to configure the tool to use the "ssbackup" profile that will be used in the backup script.
 ```
 aws configure --profile=ssbackup
@@ -62,11 +62,11 @@ less /usr/local/bin/ssbackup.py
 ```
 The second command is there because it's always good practice to really look through what you've downloaded and as a sanity check that it's there.
 
-Now you can test out the script.  Substitute in the volume IDs that you wrote down.  You can enter multiple volume IDs as separate parameters.
+Now you can test out the script.  Substitute in the volume IDs that you wrote down.  You can enter multiple volume IDs separated by commas.
 ```
-sudo python3 /usr/local/bin/ssbackup.py --volume-ids={vol} --expiry-days=7
+sudo python3 /usr/local/bin/ssbackup.py --volume-ids={vol},{vol} --expiry-days=7
 ```
-If there is no output, things are working.  You should see the snapshot show up in the AWS UI shortly, in EC2 under Snapshots.
+If there is nothing but short processing output, then things are working.  You should see the snapshot show up in the AWS UI shortly, in EC2 under Snapshots.
 
 ## Setting up cron
 
