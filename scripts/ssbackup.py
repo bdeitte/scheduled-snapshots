@@ -4,7 +4,7 @@
 # Originally from https://www.flynsarmy.com/2015/06/how-to-schedule-daily-rolling-ebs-snapshots/
 #
 # Usage:
-# python3 ssbackup.py --volume-ids=vol-1a23bcd4 --volume-ids=vol-2b34cde5 --expiry-days=7
+# python3 ssbackup.py --volume-ids=vol-1a23bcd4,vol-2b34cde5 --expiry-days=7
 #
 
 import argparse
@@ -43,18 +43,15 @@ def createSnapshots(volumeIds):
 
     # Add Name and Group tags to the snapshot
     if len(snapshots):
-        snapshotIds = []
         date = time.strftime("%Y-%m-%d")
+        bashCmd = ["aws", "ec2", "create-tags", "--resources"]
 
         for snapshot in snapshots:
-            snapshotIds.append(snapshot['SnapshotId'])
+            bashCmd.append(snapshot['SnapshotId'])
 
-        response = bash([
-            "aws", "ec2", "create-tags",
-            "--resources", ' '.join(snapshotIds),
-            "--tags", "Key=Name,Value='Backup "+date+"'", "Key=Group,Value=ssbackup",
-            "--profile", profile
-        ])
+        bashCmd += ["--tags", "Key=Name,Value='Backup "+date+"'", "Key=Group,Value=ssbackup","--profile", profile]
+        response = bash(bashCmd)
+
         if response.strip() == "":
             # Some versions of the CLI do not return data on a successful
             # call here, and that's ok
@@ -121,13 +118,13 @@ if __name__ == '__main__':
     volumeIds = args.volume_ids.split(',')
     # Create the snapshots
     if len(volumeIds):
-        print("Creating snapshots");
+        print("Creating snapshots...");
         snapshots = createSnapshots(volumeIds)
         pass
 
     # Delete snapshots older than expiry-days
     if args.delete_old:
-        print("Deleting old snapshots")
+        print("Deleting old snapshots...")
         deleteOldSnapshots(getOurSnapshots(), args.expiry_days)
 
-    print("Processing completed")
+    print("Processing completed. See ssbackup.log for more details.")
