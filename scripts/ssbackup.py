@@ -96,13 +96,13 @@ def deleteOldSnapshots(snapshots, max_age):
         dateDiff = date - snapshotDate
 
         if dateDiff.days >= max_age:
-            message = "Deleting snapshot "+snapshot['SnapshotId']+" ("+str(dateDiff.days)+" days old)..."
-            response = json.loads(bash([
+            message = "Deleting snapshot "+snapshot['SnapshotId']+" ("+str(dateDiff.days)+" days old)... "
+            response = bash([
                 "aws", "ec2", "delete-snapshot",
                 "--snapshot-id", snapshot['SnapshotId'],
                 "--profile", profile
-            ]))
-            message += "done"
+            ])
+            message += response
             logging.info(message)
 
 if __name__ == '__main__':
