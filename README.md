@@ -15,20 +15,34 @@ First we need to set up a user that we will use specifically for backups, which 
 Policy to use:
 ```
 {
+    "Version": "2012-10-17",
     "Statement": [
         {
+            "Action": "ec2:CreateSnapshot",
             "Effect": "Allow",
-            "Action": [
-                "ec2:CreateSnapshot",
-                "ec2:CreateTags",
-                "ec2:DeleteSnapshot",
-                "ec2:DescribeSnapshots",
-                "ec2:DescribeTags"
-            ],
-            "Resource": [
-                "*"
-            ]
+            "Resource": "*"
+        },
+        {
+            "Effect": "Allow",
+            "Action": "ec2:CreateTags",
+            "Resource": "*"
+        },
+        {
+            "Effect": "Allow",
+            "Action": "ec2:DeleteSnapshot",
+            "Resource": "*"
+        },
+        {
+            "Effect": "Allow",
+            "Action": "ec2:DescribeSnapshots",
+            "Resource": "*"
+        },
+        {
+            "Effect": "Allow",
+            "Action": "ec2:DescribeTags",
+            "Resource": "*"
         }
+
     ]
 }
 ```
